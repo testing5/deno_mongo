@@ -466,6 +466,42 @@ testWithTestDBClient("testUpdateMany", async (db) => {
   });
 });
 
+
+
+testWithTestDBClient("testBulkUpdate", async (db) => {
+  const users = db.collection<User>("mongo_test_users");
+
+  const origin = [
+    {
+      username: "user1",
+      password: "pass1",
+    },
+    {
+      username: "user2",
+      password: "pass2",
+    },
+    {
+      username: "many",
+      password: "pass3",
+    },
+    {
+      username: "many4",
+      password: "pass4",
+    },
+  ]
+  await users.insertMany(origin);
+  const ops = origin.map(a => ({
+    q: { username: a.username },
+    u: { $set: { password: a.password + "888" } }
+  }))
+
+  const result = await users.bulkUpdate(ops)
+  console.log(result)
+  const all = await users.find({}).toArray()
+  console.log(all)
+  // assertEquals(modifiedCount, 4);
+});
+
 testWithTestDBClient("testDeleteMany", async (db) => {
   const users = db.collection<User>("mongo_test_users");
   await users.insertMany([

@@ -25,7 +25,7 @@ import {
 import { AggregateCursor } from "./commands/aggregate.ts";
 import { FindCursor } from "./commands/find.ts";
 import { ListIndexesCursor } from "./commands/list_indexes.ts";
-import { update } from "./commands/update.ts";
+import { update, bulkUpdate } from "./commands/update.ts";
 
 export class Collection<T> {
   #protocol: WireProtocol;
@@ -231,6 +231,23 @@ export class Collection<T> {
     }
 
     return update(this.#protocol, this.#dbName, this.name, filter, doc, {
+      ...options,
+      multi: options?.multi ?? true,
+    });
+  }
+
+  bulkUpdate(
+    ops: { q: Filter<T>, u: UpdateFilter<T> }[],
+    options?: UpdateOptions,
+  ) {
+    for (const op of ops) {
+      if (!hasAtomicOperators(op.u)) {
+        throw new MongoInvalidArgumentError(
+          "Update document requires atomic operators",
+        );
+      }
+    }
+    return bulkUpdate(this.#protocol, this.#dbName, this.name, ops, {
       ...options,
       multi: options?.multi ?? true,
     });
